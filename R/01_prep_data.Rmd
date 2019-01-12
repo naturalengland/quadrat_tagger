@@ -1,0 +1,43 @@
+---
+title: "Prepare data"
+author: "Christoph Kratz"
+date: "12 January 2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+#packages
+library(tidyverse)
+```
+
+
+```{r}
+#import field data
+raw <- read_csv("../data/quadrat_data.csv")
+```
+
+```{r}
+#clean quadrat data into long format
+quadrat_data <- raw %>% 
+  mutate_at(vars(q01:q10), replace_na, 0) %>% #replace NA with 0
+  gather(key = quadrat, value = presabs, q01:q10) %>% #long format
+  filter(is.na(species) == F) %>% #remove empty species rows
+  mutate(presabs = as.factor(presabs)) %>%   #factor presabs 
+  mutate(presabs = recode_factor(presabs, "0" = "0", .default = "1")) %>%  #replace..
+    #replace any character that isn't 0 with 1 (assumes all characters indicate presence)
+  mutate(`pic-filename` = paste0("pic_", `survey-code`, "_", quadrat, ".png")) #add pic filename
+
+
+table(quadrat_data$presabs)
+unique(quadrat_data$comments)
+
+quadrat_data
+```
+
+
+
+
