@@ -38,6 +38,11 @@ unique(quadrat_data$comments)
 quadrat_data
 ```
 
+##Export
+```{r}
+#write to file
+write_csv(quadrat_data, "../data/quad_data_prepped.csv")
+```
 
 
 
