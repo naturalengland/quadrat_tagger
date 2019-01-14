@@ -29,7 +29,8 @@ quadrat_data <- raw %>%
   mutate(presabs = as.factor(presabs)) %>%   #factor presabs 
   mutate(presabs = recode_factor(presabs, "0" = "0", .default = "1")) %>%  #replace..
     #replace any character that isn't 0 with 1 (assumes all characters indicate presence)
-  mutate(`pic-filename` = paste0("pic_", `survey-code`, "_", quadrat, ".png")) #add pic filename
+  mutate(image = paste0("pic_", survey_code, "_", quadrat, ".png")) %>% #add pic filename
+  select(image, everything())
 
 
 table(quadrat_data$presabs)
@@ -37,6 +38,19 @@ unique(quadrat_data$comments)
 
 quadrat_data
 ```
+
+
+```{r}
+#manifest in wide form
+manifest <- quadrat_data %>% 
+  select(-comments) %>% 
+  #mutate(presabs = recode_factor(presabs, "0" = "absent", "1" = "present")) %>% 
+  spread(key = species, value = presabs)
+
+write_csv(manifest, "../data/manifest.csv")
+```
+
+
 
 ##Export
 ```{r}
