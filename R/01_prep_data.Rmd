@@ -17,16 +17,26 @@ library(tidyverse)
 
 ```{r}
 #import field data
-raw <- read_csv("../data/quadrat_data.csv")
+raw <- read_csv("../data/quadrat_data.csv", locale = locale(encoding = "ASCII"), trim_ws = T) %>% mutate_all(str_trim)
+# raw
+as.data.frame(table(raw$species))
+# raw <- as.data.frame(lapply(raw, function(x) {trimws(x, which = "right")}))
+# #raw <- trimws(raw, which = "right")
+# as.data.frame(table(raw$species))
+# raw
 ```
 
 ```{r}
+dim(raw)
 #clean quadrat data into long format
 quadrat_data <- raw %>% 
-  mutate_at(vars(q01:q10), replace_na, 0) %>% #replace NA with 0
+  mutate_at(vars(q01:q10), funs(replace_na(., replace = "0"))) %>% #replace NA with 0
   gather(key = quadrat, value = presabs, q01:q10) %>% #long format
-  filter(is.na(species) == F) %>% #remove empty species rows
-  mutate(presabs = as.factor(presabs)) %>%   #factor presabs 
+  mutate(species = tolower(species)) %>% #species to lowercase re duplicates
+  filter(is.na(species) == F) %>% #remove NA species rows
+  filter(species != "") %>% #remove empty species rows
+  mutate(presabs = as.factor(presabs)) %>%   
+  #factor presabs 
   mutate(presabs = recode_factor(presabs, "0" = "0", .default = "1")) %>%  #replace..
     #replace any character that isn't 0 with 1 (assumes all characters indicate presence)
   mutate(image = paste0("pic_", survey_code, "_", quadrat, ".png")) %>% #add pic filename
@@ -35,6 +45,7 @@ quadrat_data <- raw %>%
 
 table(quadrat_data$presabs)
 unique(quadrat_data$comments)
+as.data.frame(table(quadrat_data$species)) %>% arrange(Freq)
 
 quadrat_data
 ```
@@ -50,12 +61,23 @@ manifest <- quadrat_data %>%
 write_csv(manifest, "../data/manifest.csv")
 ```
 
+```{r}
+#species lists
+species_list <- 
+quadrat_data %>% 
+  select(-comments) %>% 
+  mutate(spp_abbr = vegan::make.cepnames(species)) %>% 
+  group_by(image, survey_code, quadrat, presabs) %>%
+   dplyr::summarise(val=paste(spp_abbr, collapse=", "))
 
+species_list
+```
 
 ##Export
 ```{r}
 #write to file
 write_csv(quadrat_data, "../data/quad_data_prepped.csv")
+write_csv(species_list, "../data/species_list.csv")
 ```
 
 
